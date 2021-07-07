@@ -10,6 +10,9 @@ from . import BaseFlow, register_flow
 from ..tasks import build_task
 from ..utils import extract_embed, EarlyStopping
 
+from ..sampler.MAGNN_sampler import MAGNN_sampler
+from ..models.MAGNN import mini_mp_instance_sampler
+
 
 @register_flow("node_classification")
 class NodeClassification(BaseFlow):
@@ -56,7 +59,10 @@ class NodeClassification(BaseFlow):
         self.labels = self.task.get_labels().to(self.device)
         if self.args.mini_batch_flag:
             # sampler = dgl.dataloading.MultiLayerNeighborSampler([self.args.fanout] * self.args.n_layers)
-            sampler = dgl.dataloading.MultiLayerFullNeighborSampler(self.args.n_layers)
+            if self.model_name == 'MAGNN':
+                sampler = MAGNN_sampler(self.hg, self.args.num_layers, self.model.metapath_list)
+            else:
+                sampler = dgl.dataloading.MultiLayerFullNeighborSampler(self.args.n_layers)
             self.loader = dgl.dataloading.NodeDataLoader(
                 self.hg.to('cpu'), {self.category: self.train_idx.to('cpu')}, sampler,
                 batch_size=self.args.batch_size, device=self.device, shuffle=True, num_workers=0)
@@ -126,7 +132,27 @@ class NodeClassification(BaseFlow):
             blocks = [blk.to(self.device) for blk in blocks]
             seeds = seeds[self.category]  # out_nodes, we only predict the nodes with type "category"
             # batch_tic = time.time()
-            emb = extract_embed(self.model.embed_layer(), input_nodes)
+            if self.model_name == 'MAGNN':
+                if self.args.num_layers == 1:
+                    _seeds = {category: seeds[category]}
+                else:
+                    _seeds = blocks[1].srcdata[dgl.NID]
+                mp_instances = self.model.metapath_idx_dict
+                mini_mp_instances = mini_mp_instance_sampler(seed_nodes=_seeds, mp_instances=mp_instances,
+                                                     block=blocks[0])
+                # FIXME: BUG!!! It cannot work because the conversion from old nids to new nids happen to that:
+                # FIXME: mini mp instance sampling on block[1].srcdata generates nodes not in block[0].srcdata[dgl.NID]
+                # FIXME: Specifically: AMDMA the last A
+                
+                emb = blocks[0].srcdata['feat']
+                self.model.metapath_idx_dict = mini_mp_instances
+                self.model.metapath_list = list(mini_mp_instances.keys())
+                self.model.dst_ntypes = [meta[0] for meta in model.metapath_list]
+                for layer in self.model.layers:
+                    layer.metapath_list = self.model.metapath_list
+                    layer.dst_ntypes = self.model.dst_ntypes
+            else:
+                emb = extract_embed(self.model.embed_layer(), input_nodes)
             lbl = self.labels[seeds].to(self.device)
             logits = self.model(blocks, emb)[self.category]
             loss = self.loss_fn(logits, lbl)

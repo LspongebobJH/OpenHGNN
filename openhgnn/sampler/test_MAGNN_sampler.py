@@ -21,7 +21,7 @@ def mini_train(model, hg, args):
     loader = dgl.dataloading.NodeDataLoader(
         g=hg.to('cpu'), nids=train_nids, block_sampler=sampler, batch_size=args.batch_size, shuffle=True, drop_last=False,
         num_workers=0, device=args.device)
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     model.train()
     loss_all = 0
     for i, (input_nodes, seeds, blocks) in enumerate(loader):

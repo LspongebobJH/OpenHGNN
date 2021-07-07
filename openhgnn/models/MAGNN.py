@@ -594,7 +594,7 @@ def mini_mp_instance_sampler(seed_nodes, mp_instances, block=None):
         # mini_mp_inst[ntype] = {}
         target_mp_types = np.array(metapath_list)[[metapath[0] == ntype for metapath in metapath_list]]
         for metapath in target_mp_types:  # the metapath instances of the certain metapath
-            _mp_inst = np.isin(mp_instances[metapath][:, 0], seed_nodes[ntype])
+            _mp_inst = np.isin(mp_instances[metapath][:, 0], seed_nodes[ntype].to('cpu'))
             # _mp_inst = th.tensor(mp_instances[metapath][_mp_inst])
             _mp_inst = mp_instances[metapath][_mp_inst]
             if block is not None:

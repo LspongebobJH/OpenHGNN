@@ -15,7 +15,6 @@ class MAGNN_sampler(dgl.dataloading.BlockSampler):
         self.dataset = dataset
         self.metapath_list = metapath_list
         self.mp_inst = mp_instance_sampler(g, self.metapath_list, self.dataset)
-        # self.mini_mp_inst = False Todo: deprecated
 
     def sample_frontier(self, block_id, g, seed_nodes):
         '''
