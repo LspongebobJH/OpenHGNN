@@ -4,7 +4,10 @@ from .trainerflow import build_flow
 
 
 def OpenHGNN(args):
-    set_random_seed(args.seed)
+    if hasattr(args, 'seed'):
+        set_random_seed(args.seed)
+    else:
+        args.seed = 0
 
     # TODO find the best parameter
     if getattr(args, "use_best_config", False):
@@ -27,13 +30,15 @@ def get_trainerflow(model, task):
             return 'distmult'
     elif model in ['HetGNN']:
         return 'hetgnntrainer'
-    elif model in ['HAN', 'MAGNN', 'GTN']:
+    elif model in ['HAN', 'GTN']:
         if task in ['node_classification']:
             return 'node_classification'
     elif model in ['HGT', 'HGT_hetero']:
         return 'hgttrainer'
     elif model in ['NSHE']:
         return 'nshetrainer'
+    elif model in ['MAGNN']:
+        return 'magnntrainer'
 
 
 def trans_feature(hg, het_gnn):

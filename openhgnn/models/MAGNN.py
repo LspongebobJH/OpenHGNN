@@ -19,21 +19,12 @@ model
 class MAGNN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args, hg):
-        if args.dataset == 'imdb4MAGNN':
-            # build model
-            metapath_list = ['MDM', 'MAM', 'DMD', 'DMAMD', 'AMA', 'AMDMA']
-            edge_type_list = ['A-M', 'M-A', 'D-M', 'M-D']
-            # in_feats: {'n1type': n1_dim, 'n2type', n2_dim, ...}
-            in_feats = {'M': 3066, 'D': 2081, 'A': 5257}
-            metapath_idx_dict = mp_instance_sampler(hg, metapath_list, 'imdb4MAGNN')
-
-        elif args.dataset == 'dblp4MAGNN':
-            # build model
-            metapath_list = ['APA', 'APTPA', 'APVPA']
-            edge_type_list = ['A-P', 'P-A', 'P-T', 'T-P', 'P-V', 'V-P']
-            # in_feats: {'n1type': n1_dim, 'n2type', n2_dim, ...}
-            in_feats = {'A': 334, 'P': 14328, 'T': 7723, 'V': 20}
-            metapath_idx_dict = mp_instance_sampler(hg, metapath_list, 'dblp4MAGNN')
+        metapath_list = args.metapath_list
+        edge_type_list = args.edge_type_list
+        in_feats = {}
+        for ntype in hg.ntypes:
+            in_feats[ntype] = hg.nodes[ntype].data['feat'].shape[1]
+        metapath_idx_dict = mp_instance_sampler(hg, metapath_list, args.dataset)
 
         return cls(in_feats=in_feats,
                    h_feats=args.hidden_dim,
@@ -213,9 +204,8 @@ class MAGNN(BaseModel):
         # output layer
         h_output, embedding = self.layers[-1](h, self.metapath_idx_dict)
 
-        # TODO: TEST!!!NEED TO DEPRECATE THE RETURN EMBEDDING!
-        return h_output, embedding
-
+        # return h_output, embedding
+        return h_output
 
 class MAGNN_layer(nn.Module):
     def __init__(self, in_feats, inter_attn_feats, out_feats, num_heads, metapath_list,

@@ -54,6 +54,7 @@ SUPPORTED_FLOWS = {
     'distmult': 'openhgnn.trainerflow.dist_mult',
     'hetgnntrainer': 'openhgnn.trainerflow.hetgnn_trainer',
     'hgttrainer': 'openhgnn.trainerflow.hgt_trainer',
-    'nshetrainer': 'openhgnn.trainerflow.nshe_trainer'
+    'nshetrainer': 'openhgnn.trainerflow.nshe_trainer',
+    'magnntrainer': 'openhgnn.trainerflow.magnn_trainer'
 
 }

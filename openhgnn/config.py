@@ -5,7 +5,7 @@ import torch as th
 
 
 class Config(object):
-    def __init__(self, file_path, model, dataset, task, gpu):
+    def __init__(self, file_path, model, dataset, task, gpu, use_best_config):
         conf = configparser.ConfigParser()
         data_path = os.getcwd()
         if gpu == -1:
@@ -27,6 +27,9 @@ class Config(object):
         self.path = {'output_modelfold': './output/models/',
                      'input_fold': './dataset/'+self.dataset+'/',
                      'temp_fold': './output/temp/'+self.model+'/'}
+        self.use_best_config = use_best_config
+        if use_best_config:
+            return
 
         if model == "NSHE":
             self.dim_size = {}
@@ -180,8 +183,11 @@ class Config(object):
             self.patience = conf.getint('MAGNN', 'patience')
             self.max_epoch = conf.getint('MAGNN', 'max_epoch')
             self.encoder_type = conf.get('MAGNN', 'encoder_type')
-            self.mini_batch_flag = conf.getboolean("MAGNN", "mini_batch_flag")
-            if self.mini_batch_flag:
+            self.train_mini_batch_flag = conf.getboolean("MAGNN", "train_mini_batch_flag")
+            self.test_mini_batch_flag = conf.getboolean("MAGNN", "test_mini_batch_flag")
+            self.metapath_list = conf.get("MAGNN", "metapath_list")
+            self.edge_type_list = conf.get("MAGNN", "edge_type_list")
+            if self.train_mini_batch_flag or self.test_mini_batch_flag:
                 self.batch_size = conf.getint("MAGNN", "batch_size")
                 self.num_samples = conf.getint("MAGNN", "num_samples")
 

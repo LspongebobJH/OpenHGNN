@@ -10,6 +10,7 @@ from . import BaseFlow, register_flow
 from .node_classification import NodeClassification
 from ..sampler.MAGNN_sampler import MAGNN_sampler, collate_fn
 import time
+th.multiprocessing.set_start_method('spawn')  # TODO: note this which should be modified
 
 # TODO: Add svm test of MAGNN
 @register_flow("magnntrainer")
@@ -21,6 +22,7 @@ class MAGNNTrainer(NodeClassification):
         self.train_mask = self.hg.nodes[self.category].data['train_mask'].cpu().numpy()
         self.val_mask = self.hg.nodes[self.category].data['val_mask'].cpu().numpy()
         self.test_mask = self.hg.nodes[self.category].data['test_mask'].cpu().numpy()
+        self.hg = self.hg.to('cpu')
 
     def set_sampler(self):
 
@@ -43,7 +45,7 @@ class MAGNNTrainer(NodeClassification):
                                                                        time.perf_counter() - t))
             self.model.mini_reset_params(mini_mp_inst)
             sub_g = sub_g.to(self.args.device)
-            pred, _ = self.model(sub_g)
+            pred = self.model(sub_g)
             pred = pred[self.args.category][seed_nodes[self.args.category]]
             lbl = sub_g.nodes[self.args.category].data['labels'][seed_nodes[self.args.category]]
             loss = F.cross_entropy(pred, lbl)
@@ -53,6 +55,9 @@ class MAGNNTrainer(NodeClassification):
 
             t = time.perf_counter()
 
+            if num_iter == 0:  # TODO: test
+                break
+
         return loss.item()
 
     def _mini_test_step(self, split=None, logits=None):
@@ -60,7 +65,7 @@ class MAGNNTrainer(NodeClassification):
         with th.no_grad():
 
             if split is None:
-                mask = th.cat([self.train_mask, self.val_mask, self.test_mask], dim=0)
+                mask = np.concatenate([self.train_mask, self.val_mask, self.test_mask], dim=0)
             elif split == 'train':
                 mask = self.train_mask
             elif split == 'val':
@@ -88,7 +93,6 @@ class MAGNNTrainer(NodeClassification):
             lbl_test = lbl_test.cuda()
             embed_test_all = np.concatenate(embed_test_all, 0)
             loss_test = F.nll_loss(th.cat(logp_test_all, 0), lbl_test)
-            lbl_test = lbl_test.cpu().numpy()
 
             if split is not None:  # test specific nodes
                 metric = self.task.evaluate(embed_test_all, name=self.eval_name, mask=mask)

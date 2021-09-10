@@ -47,12 +47,18 @@ BEST_CONFIGS = {
             'general': {'lr': 0.005, 'weight_decay': 0.001, 'dropout': 0.5,
                         'hidden_dim': 64, 'encoder_type': 'RotateE', 'inter_attn_feats': 128, 'num_heads': 8,
                         'num_layers': 2},
-            'imdb': {
-                'max_epoch': 100, 'patience': 30, 'out_dim': 3, 'mini_batch_flag': False
+            'imdb4MAGNN': {
+                'max_epoch': 100, 'patience': 30, 'out_dim': 3,
+                'train_mini_batch_flag': False, 'test_mini_batch_flag': False,
+                'metapath_list': ['MDM', 'MAM', 'DMD', 'DMAMD', 'AMA', 'AMDMA'],
+                'edge_type_list': ['A-M', 'M-A', 'D-M', 'M-D']
             },
-            'dblp': {
-                'max_epoch': 10, 'patience': 5, 'mini_batch_flag': True, 'batch_size': 8, 'num_samples': 5,
-                'num_workers': 24, 'out_dim': 4
+            'dblp4MAGNN': {
+                # 'max_epoch': 10, 'patience': 5, 'batch_size': 8, 'num_samples': 5, 'num_workers': 24, 'out_dim': 4,
+                'max_epoch': 10, 'patience': 5, 'batch_size': 1, 'num_samples': 2, 'num_workers': 2, 'out_dim': 4,
+                'train_mini_batch_flag': True, 'test_mini_batch_flag': True,
+                'metapath_list': ['APA', 'APTPA', 'APVPA'],
+                'edge_type_list': ['A-P', 'P-A', 'P-T', 'T-P', 'P-V', 'V-P']
             }
         },
         'NSHE': {

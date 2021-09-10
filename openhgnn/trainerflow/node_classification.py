@@ -54,12 +54,16 @@ class NodeClassification(BaseFlow):
 
         self.train_idx, self.val_idx, self.test_idx = self.task.get_idx()
         self.labels = self.task.get_labels().to(self.device)
-        if self.args.mini_batch_flag:
-            # sampler = dgl.dataloading.MultiLayerNeighborSampler([self.args.fanout] * self.args.n_layers)
-            sampler = dgl.dataloading.MultiLayerFullNeighborSampler(self.args.n_layers)
-            self.loader = dgl.dataloading.NodeDataLoader(
-                self.hg.to('cpu'), {self.category: self.train_idx.to('cpu')}, sampler,
-                batch_size=self.args.batch_size, device=self.device, shuffle=True, num_workers=0)
+        self.preprocess()
+        if self.args.train_mini_batch_flag:
+            self.set_sampler()
+
+    def set_sampler(self):
+        # sampler = dgl.dataloading.MultiLayerNeighborSampler([self.args.fanout] * self.args.n_layers)
+        sampler = dgl.dataloading.MultiLayerFullNeighborSampler(self.args.n_layers)
+        self.loader = dgl.dataloading.NodeDataLoader(
+            self.hg.to('cpu'), {self.category: self.train_idx.to('cpu')}, sampler,
+            batch_size=self.args.batch_size, device=self.device, shuffle=True, num_workers=0)
 
     def preprocess(self):
         if self.args.model == 'GTN':
@@ -75,16 +79,20 @@ class NodeClassification(BaseFlow):
         return
 
     def train(self):
-        self.preprocess()
+        # self.preprocess()
         stopper = EarlyStopping(self.args.patience, self._checkpoint)
         epoch_iter = tqdm(range(self.max_epoch))
         for epoch in epoch_iter:
-            if self.args.mini_batch_flag:
+            if self.args.train_mini_batch_flag:
                 loss = self._mini_train_step()
             else:
                 loss = self._full_train_setp()
             #if (epoch + 1) % self.evaluate_interval == 0:
-            f1, losses = self._test_step()
+
+            if self.args.test_mini_batch_flag:
+                f1, losses = self._mini_test_step()
+            else:
+                f1, losses = self._full_test_step()
 
             train_f1 = f1["train"]
             val_f1 = f1["val"]
@@ -136,7 +144,7 @@ class NodeClassification(BaseFlow):
             self.optimizer.step()
         return loss_all
 
-    def _test_step(self, split=None, logits=None):
+    def _full_test_step(self, split=None, logits=None):
         self.model.eval()
         with torch.no_grad():
             logits = logits if logits else self.model(self.hg)[self.category]
@@ -158,5 +166,8 @@ class NodeClassification(BaseFlow):
                 metrics = {key: self.task.evaluate(logits[mask].argmax(dim=1).to('cpu'), name='f1', mask=mask) for key, mask in masks.items()}
                 losses = {key: self.loss_fn(logits[mask], self.labels[mask]) for key, mask in masks.items()}
                 return metrics, losses
+
+    def _mini_test_step(self, split=None, logits=None):
+        raise NotImplementedError
 
 

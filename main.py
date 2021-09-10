@@ -19,6 +19,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config_file = ["./openhgnn/config.ini"]
-    config = Config(file_path=config_file, model=args.model, dataset=args.dataset, task=args.task, gpu=args.gpu)
-    config.use_best_config = args.use_best_config
+    config = Config(file_path=config_file, model=args.model, dataset=args.dataset, task=args.task, gpu=args.gpu,
+                    use_best_config=args.use_best_config)
     OpenHGNN(args=config)

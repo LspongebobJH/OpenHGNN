@@ -51,8 +51,8 @@ class RDF_NodeCLassification(NodeClassificationDataset):
         return kg, category, num_classes
 
     def get_idx(self, validation=True):
-        train_mask = self.g.nodes[self.category].data.pop('train_mask')
-        test_mask = self.g.nodes[self.category].data.pop('test_mask')
+        train_mask = self.g.nodes[self.category].data['train_mask']
+        test_mask = self.g.nodes[self.category].data['test_mask']
         train_idx = th.nonzero(train_mask, as_tuple=False).squeeze()
         test_idx = th.nonzero(test_mask, as_tuple=False).squeeze()
         if validation:
@@ -65,7 +65,7 @@ class RDF_NodeCLassification(NodeClassificationDataset):
 
     def get_labels(self):
         if 'labels' in self.g.nodes[self.category].data:
-            labels = self.g.nodes[self.category].data.pop('labels')
+            labels = self.g.nodes[self.category].data['labels']
         else:
             raise ValueError('label in not in the hg.nodes[category].data')
         return labels
@@ -151,13 +151,13 @@ class HIN_NodeCLassification(NodeClassificationDataset):
                 val_idx = train_idx
                 train_idx = train_idx
         else:
-            train_mask = self.g.nodes[self.category].data.pop('train_mask')
-            test_mask = self.g.nodes[self.category].data.pop('test_mask')
+            train_mask = self.g.nodes[self.category].data['train_mask']
+            test_mask = self.g.nodes[self.category].data['test_mask']
             train_idx = th.nonzero(train_mask, as_tuple=False).squeeze()
             test_idx = th.nonzero(test_mask, as_tuple=False).squeeze()
             if validation:
                 if 'val_mask' in self.g.nodes[self.category].data:
-                    val_mask = self.g.nodes[self.category].data.pop('val_mask')
+                    val_mask = self.g.nodes[self.category].data['val_mask']
                     val_idx = th.nonzero(val_mask, as_tuple=False).squeeze()
                     pass
                 else:
@@ -170,9 +170,9 @@ class HIN_NodeCLassification(NodeClassificationDataset):
 
     def get_labels(self):
         if 'labels' in self.g.nodes[self.category].data:
-            labels = self.g.nodes[self.category].data.pop('labels')
+            labels = self.g.nodes[self.category].data['labels']
         elif 'label' in self.g.nodes[self.category].data:
-            labels = self.g.nodes[self.category].data.pop('label')
+            labels = self.g.nodes[self.category].data['label']
         else:
             raise ValueError('label in not in the hg.nodes[category].data')
         return labels
